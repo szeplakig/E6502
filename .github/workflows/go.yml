@@ -27,7 +27,7 @@ jobs:
     - name: Convert coverage to lcov
       uses: jandelgado/gcov2lcov-action@latest
     - name: Coveralls
-      uses: coverallsapp/github-action@latest
+      uses: coverallsapp/github-action@master
       with:
-        github-token: ${{ secrets.github_token }}
+        github-token: ${{ secrets.repo_token }}
         path-to-lcov: coverage.lcov
