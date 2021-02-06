@@ -81,7 +81,7 @@ func Test_INS_LDA_IM_ZERO(t *testing.T) {
 func Test_INS_LDA_IM_NEGATIVE(t *testing.T) {
 	cpu := NewCPU()
 	memory := Memory.NewMemory()
-	var val Byte = 0x42
+	var val Byte = 0xF0
 	memory.WB(0xFFFC, LDA_IM)
 	memory.WB(0xFFFD, val)
 
@@ -108,7 +108,7 @@ func Test_INS_LDA_ZP_ZERO(t *testing.T) {
 func Test_INS_LDA_ZP_NEGATIVE(t *testing.T) {
 	cpu := NewCPU()
 	memory := Memory.NewMemory()
-	var val Byte = 0x42
+	var val Byte = 0xF0
 	memory.WB(0x0000, val)
 	memory.WB(0xFFFC, LDA_ZP)
 	memory.WB(0xFFFD, 0x00)
@@ -137,7 +137,7 @@ func Test_INS_LDA_ZX_ZERO(t *testing.T) {
 func Test_INS_LDA_ZX_NEGATIVE(t *testing.T) {
 	cpu := NewCPU()
 	memory := Memory.NewMemory()
-	var val Byte = 0x42
+	var val Byte = 0xF0
 	cpu.X = 0x0F
 	memory.WB(0x008F, val)
 	memory.WB(0xFFFC, LDA_ZX)
@@ -166,7 +166,7 @@ func Test_INS_LDA_AB_ZERO(t *testing.T) {
 func Test_INS_LDA_AB_NEGATIVE(t *testing.T) {
 	cpu := NewCPU()
 	memory := Memory.NewMemory()
-	var val Byte = 0x42
+	var val Byte = 0xF0
 	memory.WB(0x4224, val)
 	memory.WB(0xFFFC, LDA_AB)
 	memory.WW(0xFFFD, 0x4224)
@@ -195,7 +195,7 @@ func Test_INS_LDA_AX_ZERO(t *testing.T) {
 func Test_INS_LDA_AX_NEGATIVE(t *testing.T) {
 	cpu := NewCPU()
 	memory := Memory.NewMemory()
-	var val Byte = 0x42
+	var val Byte = 0xF0
 	cpu.X = 0x92
 	memory.WB(0x2092, val)
 	memory.WB(0xFFFC, LDA_AX)
@@ -210,7 +210,7 @@ func Test_INS_LDA_AX_NEGATIVE(t *testing.T) {
 func Test_INS_LDA_AX_CROSSES_PAGE_BOUNDARY(t *testing.T) {
 	cpu := NewCPU()
 	memory := Memory.NewMemory()
-	var val Byte = 0x42
+	var val Byte = 0xF0
 	cpu.X = 0x92
 	memory.WB(0x2092, val)
 	memory.WB(0xFFFC, LDA_AX)
