@@ -79,6 +79,7 @@ func (cpu *CPU) Execute(cycles int, memory *Memory.Memory) {
 		LDA_ZP: cpu.H_LDA_ZP,
 		LDA_ZX: cpu.H_LDA_ZX,
 		LDA_AB: cpu.H_LDA_AB,
+		LDA_AX: cpu.H_LDA_AX,
 	}
 
 	for cycles > 0 {
@@ -135,8 +136,23 @@ func (cpu *CPU) H_LDA_ZX(cycles *int, memory *Memory.Memory) {
 func (cpu *CPU) H_LDA_AB(cycles *int, memory *Memory.Memory) {
 	byte1 := cpu.FetchBytePC(cycles, memory)
 	byte2 := cpu.FetchBytePC(cycles, memory)
-	address := uint16(byte1) | uint16(byte2)<<8
-	address += cpu.X
+	address := Word(byte1) | Word(byte2)<<8
+	value := cpu.FetchByte(cycles, memory, address)
+	cpu.A = value
+	*cycles--
+	if cpu.A == 0 {
+		cpu.Z = true
+	}
+	if (cpu.A >> 7) == 1 {
+		cpu.N = true
+	}
+}
+
+func (cpu *CPU) H_LDA_AX(cycles *int, memory *Memory.Memory) {
+	byte1 := cpu.FetchBytePC(cycles, memory)
+	byte2 := cpu.FetchBytePC(cycles, memory)
+	address := Word(byte1) | Word(byte2)<<8
+	address += Word(cpu.X)
 	value := cpu.FetchByte(cycles, memory, address)
 	cpu.A = value
 	*cycles--
