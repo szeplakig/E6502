@@ -2,7 +2,6 @@ package CPU
 
 import (
 	"E6502/Memory"
-	"fmt"
 )
 
 type Byte = uint8
@@ -73,7 +72,7 @@ func (cpu *CPU) FetchByte(cycles *int, memory *Memory.Memory, address Word) Byte
 	return value
 }
 
-func (cpu *CPU) Execute(cycles int, memory *Memory.Memory) {
+func (cpu *CPU) Execute(cycles int, memory *Memory.Memory) (bool, int) {
 	instruction_map := map[Byte]func(*int, *Memory.Memory){
 		LDA_IM: cpu.H_LDA_IM,
 		LDA_ZP: cpu.H_LDA_ZP,
@@ -87,10 +86,11 @@ func (cpu *CPU) Execute(cycles int, memory *Memory.Memory) {
 		if handler, ok := instruction_map[next_ins]; ok {
 			handler(&cycles, memory)
 		} else {
-			fmt.Print("Unknown insturction: ", next_ins)
-			return
+			return false, cycles
 		}
 	}
+
+	return cycles == 0, cycles
 }
 
 func (cpu *CPU) H_LDA_IM(cycles *int, memory *Memory.Memory) {
@@ -152,10 +152,16 @@ func (cpu *CPU) H_LDA_AX(cycles *int, memory *Memory.Memory) {
 	byte1 := cpu.FetchBytePC(cycles, memory)
 	byte2 := cpu.FetchBytePC(cycles, memory)
 	address := Word(byte1) | Word(byte2)<<8
-	address += Word(cpu.X)
-	value := cpu.FetchByte(cycles, memory, address)
+	offset_address := address + Word(cpu.X)
+	value := cpu.FetchByte(cycles, memory, offset_address)
 	cpu.A = value
 	*cycles--
+
+	// if adding X to the address crosses a page boundary, then the instruction takes one more cycle
+	if offset_address%0xFF > address%0xFF {
+		*cycles--
+	}
+
 	if cpu.A == 0 {
 		cpu.Z = true
 	}
