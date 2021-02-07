@@ -21,14 +21,17 @@ jobs:
     - name: Build
       run: go build -v ./...
 
-    - name: Test
+    - name: Run Tests
       run: go test -v ./... -covermode=count -coverprofile=coverage.out
       
     - name: Convert coverage to lcov
       uses: jandelgado/gcov2lcov-action@master
   
-    - name: Coveralls
+    - name: Run Coveralls
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.github_token }}
         path-to-lcov: coverage.lcov
+
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v1.2.1
