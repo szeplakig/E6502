@@ -1,7 +1,7 @@
-package CPU
+package cpu
 
 import (
-	"E6502/Memory"
+	"E6502/memory"
 	"testing"
 )
 
@@ -53,7 +53,7 @@ func ValidateLoad(success bool, register Byte, value Byte, cpu CPU, cpuCopy CPU,
 
 func Test_EXECUTION_RETURN_WITH_UNKNOWN_INSTRUCTION(t *testing.T) {
 	cpu := NewCPU()
-	memory := Memory.NewMemory()
+	memory := memory.NewMemory()
 	memory.WB(0xFFFC, 0x00)
 
 	cpuCopy := cpu

@@ -1,9 +1,10 @@
-package CPU
+package cpu
 
 import (
-	"E6502/Memory"
+	"E6502/memory"
 )
 
+// 6502 cpu
 type CPU struct {
 	PC Word // Program Counter
 	SP Byte // Stack Pointer
@@ -21,6 +22,7 @@ type CPU struct {
 	N bool // Negative Flag
 }
 
+// Reset the cpu
 func (cpu *CPU) Reset() {
 	cpu.PC = 0xFFFC
 	cpu.SP = 0xFF
@@ -38,111 +40,113 @@ func (cpu *CPU) Reset() {
 	cpu.N = false
 }
 
+// Create a new cpu with default values
 func NewCPU() CPU {
 	cpu := CPU{}
 	cpu.Reset()
 	return cpu
 }
 
-func Add(cycles *int, a Word, b Word) Word {
+func add(cycles *int, a Word, b Word) Word {
 	if (a%0xFF)+(b%0xFF) >= 0xFF {
 		*cycles--
 	}
 	return a + b
 }
 
-func (cpu *CPU) WriteA(cycles *int, value Byte) {
+func (cpu *CPU) writeA(cycles *int, value Byte) {
 	cpu.A = value
 }
 
-func (cpu *CPU) WriteX(cycles *int, value Byte) {
+func (cpu *CPU) writeX(cycles *int, value Byte) {
 	cpu.X = value
 }
 
-func (cpu *CPU) WriteY(cycles *int, value Byte) {
+func (cpu *CPU) writeY(cycles *int, value Byte) {
 	cpu.Y = value
 }
 
-func (cpu *CPU) LoadA(cycles *int, memory *Memory.Memory, address Word) {
-	value := cpu.FetchByte(cycles, memory, address)
-	cpu.WriteA(cycles, value)
+func (cpu *CPU) loadA(cycles *int, mem *memory.Memory, address Word) {
+	value := cpu.fetchByte(cycles, mem, address)
+	cpu.writeA(cycles, value)
 }
 
-func (cpu *CPU) LoadX(cycles *int, memory *Memory.Memory, address Word) {
-	value := cpu.FetchByte(cycles, memory, address)
-	cpu.WriteX(cycles, value)
+func (cpu *CPU) loadX(cycles *int, mem *memory.Memory, address Word) {
+	value := cpu.fetchByte(cycles, mem, address)
+	cpu.writeX(cycles, value)
 }
 
-func (cpu *CPU) LoadY(cycles *int, memory *Memory.Memory, address Word) {
-	value := cpu.FetchByte(cycles, memory, address)
-	cpu.WriteY(cycles, value)
+func (cpu *CPU) loadY(cycles *int, mem *memory.Memory, address Word) {
+	value := cpu.fetchByte(cycles, mem, address)
+	cpu.writeY(cycles, value)
 }
 
-func (cpu *CPU) FetchBytePC(cycles *int, memory *Memory.Memory) Byte {
-	value := cpu.FetchByte(cycles, memory, cpu.PC)
+func (cpu *CPU) fetchBytePC(cycles *int, mem *memory.Memory) Byte {
+	value := cpu.fetchByte(cycles, mem, cpu.PC)
 	cpu.PC++
 	return value
 }
 
-func (cpu *CPU) FetchByte(cycles *int, memory *Memory.Memory, address Word) Byte {
-	value := memory.RB(address)
+func (cpu *CPU) fetchByte(cycles *int, mem *memory.Memory, address Word) Byte {
+	value := mem.RB(address)
 	*cycles--
 	return value
 }
 
-func (cpu *CPU) FetchWord(cycles *int, memory *Memory.Memory, address Word) Word {
-	value := memory.RW(address)
+func (cpu *CPU) fetchWord(cycles *int, mem *memory.Memory, address Word) Word {
+	value := mem.RW(address)
 	*cycles -= 2
 	return value
 }
 
-func RegisterLoaderFactory(addressor func(*int, *Memory.Memory) Word, loader func(*int, *Memory.Memory, Word), flaghandler func()) func(cycles *int, memory *Memory.Memory) {
-	return func(cycles *int, memory *Memory.Memory) {
-		address := addressor(cycles, memory)
-		loader(cycles, memory, address)
+func registerLoaderFactory(addressor func(*int, *memory.Memory) Word, loader func(*int, *memory.Memory, Word), flaghandler func()) func(*int, *memory.Memory) {
+	return func(cycles *int, mem *memory.Memory) {
+		address := addressor(cycles, mem)
+		loader(cycles, mem, address)
 		flaghandler()
 	}
 }
 
-func LoadFlagLoaderFactory(register *Byte, Z *bool, N *bool) func() {
+func loadFlagLoaderFactory(register *Byte, Z *bool, N *bool) func() {
 	return func() {
 		*Z = *register == 0
 		*N = (*register >> 7) == 1
 	}
 }
 
-func (cpu *CPU) Execute(cycles int, memory *Memory.Memory) (bool, int) {
-	AFlagLoader := LoadFlagLoaderFactory(&cpu.A, &cpu.Z, &cpu.N)
-	XFlagLoader := LoadFlagLoaderFactory(&cpu.X, &cpu.Z, &cpu.N)
-	YFlagLoader := LoadFlagLoaderFactory(&cpu.Y, &cpu.Z, &cpu.N)
+// Execute n cycles using the memory
+func (cpu *CPU) Execute(cycles int, mem *memory.Memory) (bool, int) {
+	AFlagLoader := loadFlagLoaderFactory(&cpu.A, &cpu.Z, &cpu.N)
+	XFlagLoader := loadFlagLoaderFactory(&cpu.X, &cpu.Z, &cpu.N)
+	YFlagLoader := loadFlagLoaderFactory(&cpu.Y, &cpu.Z, &cpu.N)
 
-	instruction_map := map[Byte]func(*int, *Memory.Memory){
-		LDA_IM: RegisterLoaderFactory(cpu.ImmediateAddressing, cpu.LoadA, AFlagLoader),
-		LDA_ZP: RegisterLoaderFactory(cpu.ZeroPageAddressing, cpu.LoadA, AFlagLoader),
-		LDA_ZX: RegisterLoaderFactory(cpu.ZeroPageXAddressing, cpu.LoadA, AFlagLoader),
-		LDA_AB: RegisterLoaderFactory(cpu.AbsoluteAddressing, cpu.LoadA, AFlagLoader),
-		LDA_AX: RegisterLoaderFactory(cpu.AbsoluteXAddressing, cpu.LoadA, AFlagLoader),
-		LDA_AY: RegisterLoaderFactory(cpu.AbsoluteYAddressing, cpu.LoadA, AFlagLoader),
-		LDA_IX: RegisterLoaderFactory(cpu.IndirectXAddressing, cpu.LoadA, AFlagLoader),
-		LDA_IY: RegisterLoaderFactory(cpu.IndirectYAddressing, cpu.LoadA, AFlagLoader),
+	instruction_map := map[Byte]func(*int, *memory.Memory){
+		LDA_IM: registerLoaderFactory(cpu.ImmediateAddressing, cpu.loadA, AFlagLoader),
+		LDA_ZP: registerLoaderFactory(cpu.ZeroPageAddressing, cpu.loadA, AFlagLoader),
+		LDA_ZX: registerLoaderFactory(cpu.ZeroPageXAddressing, cpu.loadA, AFlagLoader),
+		LDA_AB: registerLoaderFactory(cpu.AbsoluteAddressing, cpu.loadA, AFlagLoader),
+		LDA_AX: registerLoaderFactory(cpu.AbsoluteXAddressing, cpu.loadA, AFlagLoader),
+		LDA_AY: registerLoaderFactory(cpu.AbsoluteYAddressing, cpu.loadA, AFlagLoader),
+		LDA_IX: registerLoaderFactory(cpu.IndirectXAddressing, cpu.loadA, AFlagLoader),
+		LDA_IY: registerLoaderFactory(cpu.IndirectYAddressing, cpu.loadA, AFlagLoader),
 
-		LDX_IM: RegisterLoaderFactory(cpu.ImmediateAddressing, cpu.LoadX, XFlagLoader),
-		LDX_ZP: RegisterLoaderFactory(cpu.ZeroPageAddressing, cpu.LoadX, XFlagLoader),
-		LDX_ZY: RegisterLoaderFactory(cpu.ZeroPageYAddressing, cpu.LoadX, XFlagLoader),
-		LDX_AB: RegisterLoaderFactory(cpu.AbsoluteAddressing, cpu.LoadX, XFlagLoader),
-		LDX_AY: RegisterLoaderFactory(cpu.AbsoluteYAddressing, cpu.LoadX, XFlagLoader),
+		LDX_IM: registerLoaderFactory(cpu.ImmediateAddressing, cpu.loadX, XFlagLoader),
+		LDX_ZP: registerLoaderFactory(cpu.ZeroPageAddressing, cpu.loadX, XFlagLoader),
+		LDX_ZY: registerLoaderFactory(cpu.ZeroPageYAddressing, cpu.loadX, XFlagLoader),
+		LDX_AB: registerLoaderFactory(cpu.AbsoluteAddressing, cpu.loadX, XFlagLoader),
+		LDX_AY: registerLoaderFactory(cpu.AbsoluteYAddressing, cpu.loadX, XFlagLoader),
 
-		LDY_IM: RegisterLoaderFactory(cpu.ImmediateAddressing, cpu.LoadY, YFlagLoader),
-		LDY_ZP: RegisterLoaderFactory(cpu.ZeroPageAddressing, cpu.LoadY, YFlagLoader),
-		LDY_ZX: RegisterLoaderFactory(cpu.ZeroPageXAddressing, cpu.LoadY, YFlagLoader),
-		LDY_AB: RegisterLoaderFactory(cpu.AbsoluteAddressing, cpu.LoadY, YFlagLoader),
-		LDY_AX: RegisterLoaderFactory(cpu.AbsoluteXAddressing, cpu.LoadY, YFlagLoader),
+		LDY_IM: registerLoaderFactory(cpu.ImmediateAddressing, cpu.loadY, YFlagLoader),
+		LDY_ZP: registerLoaderFactory(cpu.ZeroPageAddressing, cpu.loadY, YFlagLoader),
+		LDY_ZX: registerLoaderFactory(cpu.ZeroPageXAddressing, cpu.loadY, YFlagLoader),
+		LDY_AB: registerLoaderFactory(cpu.AbsoluteAddressing, cpu.loadY, YFlagLoader),
+		LDY_AX: registerLoaderFactory(cpu.AbsoluteXAddressing, cpu.loadY, YFlagLoader),
 	}
 
 	for cycles > 0 {
-		next_ins := cpu.FetchBytePC(&cycles, memory)
+		next_ins := cpu.fetchBytePC(&cycles, mem)
 		if handler, ok := instruction_map[next_ins]; ok {
-			handler(&cycles, memory)
+			handler(&cycles, mem)
 		} else {
 			return false, cycles
 		}

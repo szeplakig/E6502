@@ -1,8 +1,9 @@
-package Memory
+package memory
 
-type Byte = uint8
-type Word = uint16
+type Byte = uint8  // Byte type 6502
+type Word = uint16 // Word type 6502
 
+// The Memory structure of the 6502
 type Memory struct {
 	Data []Byte
 }

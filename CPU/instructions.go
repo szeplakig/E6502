@@ -1,4 +1,4 @@
-package CPU
+package cpu
 
 const (
 	NOP = 0xEA
