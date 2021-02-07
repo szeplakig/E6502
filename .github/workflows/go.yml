@@ -34,4 +34,6 @@ jobs:
         path-to-lcov: coverage.lcov
 
     - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v1.2.1
+      uses: golangci/golangci-lint-action@master
+      with:
+        version: v1.36
