@@ -96,28 +96,47 @@ func (cpu *CPU) FetchWord(cycles *int, memory *Memory.Memory, address Word) Word
 	return value
 }
 
+func RegisterLoaderFactory(addressor func(*int, *Memory.Memory) Word, loader func(*int, *Memory.Memory, Word), flaghandler func()) func(cycles *int, memory *Memory.Memory) {
+	return func(cycles *int, memory *Memory.Memory) {
+		address := addressor(cycles, memory)
+		loader(cycles, memory, address)
+		flaghandler()
+	}
+}
+
+func LoadFlagLoaderFactory(register *Byte, Z *bool, N *bool) func() {
+	return func() {
+		*Z = *register == 0
+		*N = (*register >> 7) == 1
+	}
+}
+
 func (cpu *CPU) Execute(cycles int, memory *Memory.Memory) (bool, int) {
+	AFlagLoader := LoadFlagLoaderFactory(&cpu.A, &cpu.Z, &cpu.N)
+	XFlagLoader := LoadFlagLoaderFactory(&cpu.X, &cpu.Z, &cpu.N)
+	YFlagLoader := LoadFlagLoaderFactory(&cpu.Y, &cpu.Z, &cpu.N)
+
 	instruction_map := map[Byte]func(*int, *Memory.Memory){
-		LDA_IM: cpu.H_LDA_IM,
-		LDA_ZP: cpu.H_LDA_ZP,
-		LDA_ZX: cpu.H_LDA_ZX,
-		LDA_AB: cpu.H_LDA_AB,
-		LDA_AX: cpu.H_LDA_AX,
-		LDA_AY: cpu.H_LDA_AY,
-		LDA_IX: cpu.H_LDA_IX,
-		LDA_IY: cpu.H_LDA_IY,
+		LDA_IM: RegisterLoaderFactory(cpu.ImmediateAddressing, cpu.LoadA, AFlagLoader),
+		LDA_ZP: RegisterLoaderFactory(cpu.ZeroPageAddressing, cpu.LoadA, AFlagLoader),
+		LDA_ZX: RegisterLoaderFactory(cpu.ZeroPageXAddressing, cpu.LoadA, AFlagLoader),
+		LDA_AB: RegisterLoaderFactory(cpu.AbsoluteAddressing, cpu.LoadA, AFlagLoader),
+		LDA_AX: RegisterLoaderFactory(cpu.AbsoluteXAddressing, cpu.LoadA, AFlagLoader),
+		LDA_AY: RegisterLoaderFactory(cpu.AbsoluteYAddressing, cpu.LoadA, AFlagLoader),
+		LDA_IX: RegisterLoaderFactory(cpu.IndirectXAddressing, cpu.LoadA, AFlagLoader),
+		LDA_IY: RegisterLoaderFactory(cpu.IndirectYAddressing, cpu.LoadA, AFlagLoader),
 
-		LDX_IM: cpu.H_LDX_IM,
-		LDX_ZP: cpu.H_LDX_ZP,
-		LDX_ZY: cpu.H_LDX_ZY,
-		LDX_AB: cpu.H_LDX_AB,
-		LDX_AY: cpu.H_LDX_AY,
+		LDX_IM: RegisterLoaderFactory(cpu.ImmediateAddressing, cpu.LoadX, XFlagLoader),
+		LDX_ZP: RegisterLoaderFactory(cpu.ZeroPageAddressing, cpu.LoadX, XFlagLoader),
+		LDX_ZY: RegisterLoaderFactory(cpu.ZeroPageYAddressing, cpu.LoadX, XFlagLoader),
+		LDX_AB: RegisterLoaderFactory(cpu.AbsoluteAddressing, cpu.LoadX, XFlagLoader),
+		LDX_AY: RegisterLoaderFactory(cpu.AbsoluteYAddressing, cpu.LoadX, XFlagLoader),
 
-		LDY_IM: cpu.H_LDY_IM,
-		LDY_ZP: cpu.H_LDY_ZP,
-		LDY_ZX: cpu.H_LDY_ZX,
-		LDY_AB: cpu.H_LDY_AB,
-		LDY_AX: cpu.H_LDY_AX,
+		LDY_IM: RegisterLoaderFactory(cpu.ImmediateAddressing, cpu.LoadY, YFlagLoader),
+		LDY_ZP: RegisterLoaderFactory(cpu.ZeroPageAddressing, cpu.LoadY, YFlagLoader),
+		LDY_ZX: RegisterLoaderFactory(cpu.ZeroPageXAddressing, cpu.LoadY, YFlagLoader),
+		LDY_AB: RegisterLoaderFactory(cpu.AbsoluteAddressing, cpu.LoadY, YFlagLoader),
+		LDY_AX: RegisterLoaderFactory(cpu.AbsoluteXAddressing, cpu.LoadY, YFlagLoader),
 	}
 
 	for cycles > 0 {

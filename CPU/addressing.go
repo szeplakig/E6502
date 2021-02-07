@@ -4,6 +4,11 @@ import (
 	"E6502/Memory"
 )
 
+func (cpu *CPU) ImmediateAddressing(cycles *int, memory *Memory.Memory) Word {
+	address := cpu.PC
+	return address
+}
+
 func (cpu *CPU) ZeroPageAddressing(cycles *int, memory *Memory.Memory) Word {
 	address := Word(cpu.FetchBytePC(cycles, memory))
 	return address
@@ -46,7 +51,7 @@ func (cpu *CPU) AbsoluteYAddressing(cycles *int, memory *Memory.Memory) Word {
 	return offset_address
 }
 
-func (cpu *CPU) IdirectXAddressing(cycles *int, memory *Memory.Memory) Word {
+func (cpu *CPU) IndirectXAddressing(cycles *int, memory *Memory.Memory) Word {
 	address := cpu.FetchBytePC(cycles, memory)
 	offset_address := Word(address + cpu.X)
 	*cycles--
@@ -54,7 +59,7 @@ func (cpu *CPU) IdirectXAddressing(cycles *int, memory *Memory.Memory) Word {
 	return indirect_address
 }
 
-func (cpu *CPU) IndirectYAdressing(cycles *int, memory *Memory.Memory) Word {
+func (cpu *CPU) IndirectYAddressing(cycles *int, memory *Memory.Memory) Word {
 	address := Word(cpu.FetchBytePC(cycles, memory))
 	indirect_address := cpu.FetchWord(cycles, memory, address)
 	offset_address := Add(cycles, indirect_address, Word(cpu.Y))
