@@ -18,18 +18,18 @@ func NewMemory() Memory {
 }
 
 func (memory *Memory) WB(address Word, value Byte) {
-	memory.Data[address] = value
+	memory.Data[address%0xFFFF] = value
 }
 
 func (memory *Memory) WW(address Word, value Word) {
-	memory.Data[address] = Byte(value)
-	memory.Data[address+1] = Byte(value >> 8)
+	memory.Data[address%0xFFFF] = Byte(value)
+	memory.Data[(address+1)%0xFFFF] = Byte(value >> 8)
 }
 
 func (memory *Memory) RB(address Word) Byte {
-	return memory.Data[address]
+	return memory.Data[address%0xFFFF]
 }
 
 func (memory *Memory) RW(address Word) Word {
-	return Word(memory.Data[address]) | Word(memory.Data[address+1])<<8
+	return Word(memory.Data[address%0xFFFF]) | Word(memory.Data[(address+1)%0xFFFF])<<8
 }

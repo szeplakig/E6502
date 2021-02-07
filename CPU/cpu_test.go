@@ -33,18 +33,21 @@ func VerifyFlagsUnchanged(cpu CPU, cpuCopy CPU, mask Byte) bool {
 	return true
 }
 
-func ValidateLoad(register Byte, value Byte, cpu CPU, cpuCopy CPU, t *testing.T) {
+func ValidateLoad(success bool, register Byte, value Byte, cpu CPU, cpuCopy CPU, t *testing.T) {
+	if !success {
+		t.Error("Register did not take the exact cycles to get performed!")
+	}
 	if register != value {
-		t.Error("LDA IM not loading next byte into Accumulator!")
+		t.Errorf("Register not loading correct byte into Accumulator! Register: %d, value: %d", register, value)
 	}
 	if ((value>>7) == 1 && !cpu.N) || ((value>>7) == 0 && cpu.N) {
-		t.Error("LDA IM not setting negative flag correctly!")
+		t.Error("Register not setting negative flag correctly!")
 	}
 	if (value == 0 && !cpu.Z) || (value != 0 && cpu.Z) {
-		t.Error("LDA IM not setting zero flag correctly!")
+		t.Error("Register not setting zero flag correctly!")
 	}
 	if !VerifyFlagsUnchanged(cpu, cpuCopy, ZN) {
-		t.Error("LDA IM not setting the flags correctly!")
+		t.Error("Register not setting the flags correctly!")
 	}
 }
 
@@ -63,161 +66,4 @@ func Test_EXECUTION_RETURN_WITH_UNKNOWN_INSTRUCTION(t *testing.T) {
 	if !VerifyFlagsUnchanged(cpu, cpuCopy, ALL) {
 		t.Error("No instructions executed should leave all flags unchanged!")
 	}
-}
-
-func Test_INS_LDA_IM_ZERO(t *testing.T) {
-	cpu := NewCPU()
-	memory := Memory.NewMemory()
-	var val Byte = 0x0
-	memory.WB(0xFFFC, LDA_IM)
-	memory.WB(0xFFFD, val)
-
-	cpuCopy := cpu
-	cpu.Execute(2, &memory)
-
-	ValidateLoad(cpu.A, val, cpu, cpuCopy, t)
-}
-
-func Test_INS_LDA_IM_NEGATIVE(t *testing.T) {
-	cpu := NewCPU()
-	memory := Memory.NewMemory()
-	var val Byte = 0xF0
-	memory.WB(0xFFFC, LDA_IM)
-	memory.WB(0xFFFD, val)
-
-	cpuCopy := cpu
-	cpu.Execute(2, &memory)
-
-	ValidateLoad(cpu.A, val, cpu, cpuCopy, t)
-}
-
-func Test_INS_LDA_ZP_ZERO(t *testing.T) {
-	cpu := NewCPU()
-	memory := Memory.NewMemory()
-	var val Byte = 0x0
-	memory.WB(0x0000, val)
-	memory.WB(0xFFFC, LDA_ZP)
-	memory.WB(0xFFFD, 0x00)
-
-	cpuCopy := cpu
-	cpu.Execute(3, &memory)
-
-	ValidateLoad(cpu.A, val, cpu, cpuCopy, t)
-}
-
-func Test_INS_LDA_ZP_NEGATIVE(t *testing.T) {
-	cpu := NewCPU()
-	memory := Memory.NewMemory()
-	var val Byte = 0xF0
-	memory.WB(0x0000, val)
-	memory.WB(0xFFFC, LDA_ZP)
-	memory.WB(0xFFFD, 0x00)
-
-	cpuCopy := cpu
-	cpu.Execute(3, &memory)
-
-	ValidateLoad(cpu.A, val, cpu, cpuCopy, t)
-}
-
-func Test_INS_LDA_ZX_ZERO(t *testing.T) {
-	cpu := NewCPU()
-	memory := Memory.NewMemory()
-	var val Byte = 0x0
-	cpu.X = 0x0F
-	memory.WB(0x008F, val)
-	memory.WB(0xFFFC, LDA_ZX)
-	memory.WB(0xFFFD, 0x80)
-
-	cpuCopy := cpu
-	cpu.Execute(4, &memory)
-
-	ValidateLoad(cpu.A, val, cpu, cpuCopy, t)
-}
-
-func Test_INS_LDA_ZX_NEGATIVE(t *testing.T) {
-	cpu := NewCPU()
-	memory := Memory.NewMemory()
-	var val Byte = 0xF0
-	cpu.X = 0x0F
-	memory.WB(0x008F, val)
-	memory.WB(0xFFFC, LDA_ZX)
-	memory.WB(0xFFFD, 0x80)
-
-	cpuCopy := cpu
-	cpu.Execute(4, &memory)
-
-	ValidateLoad(cpu.A, val, cpu, cpuCopy, t)
-}
-
-func Test_INS_LDA_AB_ZERO(t *testing.T) {
-	cpu := NewCPU()
-	memory := Memory.NewMemory()
-	var val Byte = 0x0
-	memory.WB(0x4224, val)
-	memory.WB(0xFFFC, LDA_AB)
-	memory.WW(0xFFFD, 0x4224)
-
-	cpuCopy := cpu
-	cpu.Execute(4, &memory)
-
-	ValidateLoad(cpu.A, val, cpu, cpuCopy, t)
-}
-
-func Test_INS_LDA_AB_NEGATIVE(t *testing.T) {
-	cpu := NewCPU()
-	memory := Memory.NewMemory()
-	var val Byte = 0xF0
-	memory.WB(0x4224, val)
-	memory.WB(0xFFFC, LDA_AB)
-	memory.WW(0xFFFD, 0x4224)
-
-	cpuCopy := cpu
-	cpu.Execute(4, &memory)
-
-	ValidateLoad(cpu.A, val, cpu, cpuCopy, t)
-}
-
-func Test_INS_LDA_AX_ZERO(t *testing.T) {
-	cpu := NewCPU()
-	memory := Memory.NewMemory()
-	var val Byte = 0x0
-	cpu.X = 0x92
-	memory.WB(0x2092, val)
-	memory.WB(0xFFFC, LDA_AX)
-	memory.WW(0xFFFD, 0x2000)
-
-	cpuCopy := cpu
-	cpu.Execute(4, &memory)
-
-	ValidateLoad(cpu.A, val, cpu, cpuCopy, t)
-}
-
-func Test_INS_LDA_AX_NEGATIVE(t *testing.T) {
-	cpu := NewCPU()
-	memory := Memory.NewMemory()
-	var val Byte = 0xF0
-	cpu.X = 0x92
-	memory.WB(0x2092, val)
-	memory.WB(0xFFFC, LDA_AX)
-	memory.WW(0xFFFD, 0x2000)
-
-	cpuCopy := cpu
-	cpu.Execute(4, &memory)
-
-	ValidateLoad(cpu.A, val, cpu, cpuCopy, t)
-}
-
-func Test_INS_LDA_AX_CROSSES_PAGE_BOUNDARY(t *testing.T) {
-	cpu := NewCPU()
-	memory := Memory.NewMemory()
-	var val Byte = 0xF0
-	cpu.X = 0x92
-	memory.WB(0x2092, val)
-	memory.WB(0xFFFC, LDA_AX)
-	memory.WW(0xFFFD, 0x2000)
-
-	cpuCopy := cpu
-	cpu.Execute(4, &memory)
-
-	ValidateLoad(cpu.A, val, cpu, cpuCopy, t)
 }

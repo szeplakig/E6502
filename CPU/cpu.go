@@ -4,22 +4,6 @@ import (
 	"E6502/Memory"
 )
 
-type Byte = uint8
-type Word = uint16
-
-type Instruction = Byte
-
-const (
-	LDA_IM = 0xA9
-	LDA_ZP = 0xA5
-	LDA_ZX = 0xB5
-	LDA_AB = 0xAD
-	LDA_AX = 0xBD
-	LDA_AY = 0xB9
-	LDA_IX = 0xA1
-	LDA_IY = 0xB1
-)
-
 type CPU struct {
 	PC Word // Program Counter
 	SP Byte // Stack Pointer
@@ -60,6 +44,40 @@ func NewCPU() CPU {
 	return cpu
 }
 
+func Add(cycles *int, a Word, b Word) Word {
+	if (a%0xFF)+(b%0xFF) >= 0xFF {
+		*cycles--
+	}
+	return a + b
+}
+
+func (cpu *CPU) WriteA(cycles *int, value Byte) {
+	cpu.A = value
+}
+
+func (cpu *CPU) WriteX(cycles *int, value Byte) {
+	cpu.X = value
+}
+
+func (cpu *CPU) WriteY(cycles *int, value Byte) {
+	cpu.Y = value
+}
+
+func (cpu *CPU) LoadA(cycles *int, memory *Memory.Memory, address Word) {
+	value := cpu.FetchByte(cycles, memory, address)
+	cpu.WriteA(cycles, value)
+}
+
+func (cpu *CPU) LoadX(cycles *int, memory *Memory.Memory, address Word) {
+	value := cpu.FetchByte(cycles, memory, address)
+	cpu.WriteX(cycles, value)
+}
+
+func (cpu *CPU) LoadY(cycles *int, memory *Memory.Memory, address Word) {
+	value := cpu.FetchByte(cycles, memory, address)
+	cpu.WriteY(cycles, value)
+}
+
 func (cpu *CPU) FetchBytePC(cycles *int, memory *Memory.Memory) Byte {
 	value := cpu.FetchByte(cycles, memory, cpu.PC)
 	cpu.PC++
@@ -72,6 +90,12 @@ func (cpu *CPU) FetchByte(cycles *int, memory *Memory.Memory, address Word) Byte
 	return value
 }
 
+func (cpu *CPU) FetchWord(cycles *int, memory *Memory.Memory, address Word) Word {
+	value := memory.RW(address)
+	*cycles -= 2
+	return value
+}
+
 func (cpu *CPU) Execute(cycles int, memory *Memory.Memory) (bool, int) {
 	instruction_map := map[Byte]func(*int, *Memory.Memory){
 		LDA_IM: cpu.H_LDA_IM,
@@ -79,6 +103,21 @@ func (cpu *CPU) Execute(cycles int, memory *Memory.Memory) (bool, int) {
 		LDA_ZX: cpu.H_LDA_ZX,
 		LDA_AB: cpu.H_LDA_AB,
 		LDA_AX: cpu.H_LDA_AX,
+		LDA_AY: cpu.H_LDA_AY,
+		LDA_IX: cpu.H_LDA_IX,
+		LDA_IY: cpu.H_LDA_IY,
+
+		LDX_IM: cpu.H_LDX_IM,
+		LDX_ZP: cpu.H_LDX_ZP,
+		LDX_ZY: cpu.H_LDX_ZY,
+		LDX_AB: cpu.H_LDX_AB,
+		LDX_AY: cpu.H_LDX_AY,
+
+		LDY_IM: cpu.H_LDY_IM,
+		LDY_ZP: cpu.H_LDY_ZP,
+		LDY_ZX: cpu.H_LDY_ZX,
+		LDY_AB: cpu.H_LDY_AB,
+		LDY_AX: cpu.H_LDY_AX,
 	}
 
 	for cycles > 0 {
@@ -89,83 +128,6 @@ func (cpu *CPU) Execute(cycles int, memory *Memory.Memory) (bool, int) {
 			return false, cycles
 		}
 	}
-
+	//fmt.Println(cycles)
 	return cycles == 0, cycles
-}
-
-func (cpu *CPU) H_LDA_IM(cycles *int, memory *Memory.Memory) {
-	value := cpu.FetchBytePC(cycles, memory)
-	cpu.A = value
-	*cycles--
-	if cpu.A == 0 {
-		cpu.Z = true
-	}
-	if (cpu.A >> 7) == 1 {
-		cpu.N = true
-	}
-}
-
-func (cpu *CPU) H_LDA_ZP(cycles *int, memory *Memory.Memory) {
-	address := cpu.FetchBytePC(cycles, memory)
-	value := cpu.FetchByte(cycles, memory, Word(address))
-	cpu.A = value
-	*cycles--
-	if cpu.A == 0 {
-		cpu.Z = true
-	}
-	if (cpu.A >> 7) == 1 {
-		cpu.N = true
-	}
-}
-
-func (cpu *CPU) H_LDA_ZX(cycles *int, memory *Memory.Memory) {
-	address := cpu.FetchBytePC(cycles, memory)
-	address += cpu.X
-	*cycles--
-	value := cpu.FetchByte(cycles, memory, Word(address))
-	cpu.A = value
-	*cycles--
-	if cpu.A == 0 {
-		cpu.Z = true
-	}
-	if (cpu.A >> 7) == 1 {
-		cpu.N = true
-	}
-}
-
-func (cpu *CPU) H_LDA_AB(cycles *int, memory *Memory.Memory) {
-	byte1 := cpu.FetchBytePC(cycles, memory)
-	byte2 := cpu.FetchBytePC(cycles, memory)
-	address := Word(byte1) | Word(byte2)<<8
-	value := cpu.FetchByte(cycles, memory, address)
-	cpu.A = value
-	*cycles--
-	if cpu.A == 0 {
-		cpu.Z = true
-	}
-	if (cpu.A >> 7) == 1 {
-		cpu.N = true
-	}
-}
-
-func (cpu *CPU) H_LDA_AX(cycles *int, memory *Memory.Memory) {
-	byte1 := cpu.FetchBytePC(cycles, memory)
-	byte2 := cpu.FetchBytePC(cycles, memory)
-	address := Word(byte1) | Word(byte2)<<8
-	offset_address := address + Word(cpu.X)
-	value := cpu.FetchByte(cycles, memory, offset_address)
-	cpu.A = value
-	*cycles--
-
-	// if adding X to the address crosses a page boundary, then the instruction takes one more cycle
-	if offset_address%0xFF > address%0xFF {
-		*cycles--
-	}
-
-	if cpu.A == 0 {
-		cpu.Z = true
-	}
-	if (cpu.A >> 7) == 1 {
-		cpu.N = true
-	}
 }
