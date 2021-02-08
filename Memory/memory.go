@@ -6,8 +6,8 @@ type Memory struct {
 }
 
 // Reset the memory
-func (memory *Memory) Reset() {
-	memory.Data = make([]Byte, 0xFFFF)
+func (mem *Memory) Reset() {
+	mem.Data = make([]Byte, 0xFFFF)
 }
 
 // Create a new memory
@@ -18,22 +18,22 @@ func NewMemory() Memory {
 }
 
 // Write a Byte to the memory at address
-func (memory *Memory) WB(address Word, value Byte) {
-	memory.Data[address%0xFFFF] = value
+func (mem *Memory) WB(address Word, value Byte) {
+	mem.Data[address%0xFFFF] = value
 }
 
 // Write a Word to the memory at address (big endian)
-func (memory *Memory) WW(address Word, value Word) {
-	memory.Data[address%0xFFFF] = Byte(value)
-	memory.Data[(address+1)%0xFFFF] = Byte(value >> 8)
+func (mem *Memory) WW(address Word, value Word) {
+	mem.Data[address%0xFFFF] = Byte(value)
+	mem.Data[(address+1)%0xFFFF] = Byte(value >> 8)
 }
 
 // Read a Byte from memory at address
-func (memory *Memory) RB(address Word) Byte {
-	return memory.Data[address%0xFFFF]
+func (mem *Memory) RB(address Word) Byte {
+	return mem.Data[address%0xFFFF]
 }
 
 // Read a Word from memory at address
-func (memory *Memory) RW(address Word) Word {
-	return Word(memory.Data[address%0xFFFF]) | Word(memory.Data[(address+1)%0xFFFF])<<8
+func (mem *Memory) RW(address Word) Word {
+	return Word(mem.Data[address%0xFFFF]) | Word(mem.Data[(address+1)%0xFFFF])<<8
 }
