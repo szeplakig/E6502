@@ -1,7 +1,6 @@
-package memory
+package memory_module
 
-// The Memory structure of the 6502
-type Memory struct {
+type Memory struct { // The Memory structure of the 6502
 	Data []Byte
 }
 

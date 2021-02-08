@@ -1,11 +1,8 @@
-package cpu
+package cpu_module
 
-import (
-	"E6502/memory"
-)
+import "E6502/memory_module"
 
-// 6502 cpu
-type CPU struct {
+type CPU struct { // 6502 cpu
 	PC Word // Program Counter
 	SP Byte // Stack Pointer
 
@@ -66,41 +63,41 @@ func (cpu *CPU) writeY(cycles *int, value Byte) {
 	cpu.Y = value
 }
 
-func (cpu *CPU) loadA(cycles *int, mem *memory.Memory, address Word) {
+func (cpu *CPU) loadA(cycles *int, mem *memory_module.Memory, address Word) {
 	value := cpu.fetchByte(cycles, mem, address)
 	cpu.writeA(cycles, value)
 }
 
-func (cpu *CPU) loadX(cycles *int, mem *memory.Memory, address Word) {
+func (cpu *CPU) loadX(cycles *int, mem *memory_module.Memory, address Word) {
 	value := cpu.fetchByte(cycles, mem, address)
 	cpu.writeX(cycles, value)
 }
 
-func (cpu *CPU) loadY(cycles *int, mem *memory.Memory, address Word) {
+func (cpu *CPU) loadY(cycles *int, mem *memory_module.Memory, address Word) {
 	value := cpu.fetchByte(cycles, mem, address)
 	cpu.writeY(cycles, value)
 }
 
-func (cpu *CPU) fetchBytePC(cycles *int, mem *memory.Memory) Byte {
+func (cpu *CPU) fetchBytePC(cycles *int, mem *memory_module.Memory) Byte {
 	value := cpu.fetchByte(cycles, mem, cpu.PC)
 	cpu.PC++
 	return value
 }
 
-func (cpu *CPU) fetchByte(cycles *int, mem *memory.Memory, address Word) Byte {
+func (cpu *CPU) fetchByte(cycles *int, mem *memory_module.Memory, address Word) Byte {
 	value := mem.RB(address)
 	*cycles--
 	return value
 }
 
-func (cpu *CPU) fetchWord(cycles *int, mem *memory.Memory, address Word) Word {
+func (cpu *CPU) fetchWord(cycles *int, mem *memory_module.Memory, address Word) Word {
 	value := mem.RW(address)
 	*cycles -= 2
 	return value
 }
 
-func registerLoaderFactory(addressor func(*int, *memory.Memory) Word, loader func(*int, *memory.Memory, Word), flaghandler func()) func(*int, *memory.Memory) {
-	return func(cycles *int, mem *memory.Memory) {
+func registerLoaderFactory(addressor func(*int, *memory_module.Memory) Word, loader func(*int, *memory_module.Memory, Word), flaghandler func()) func(*int, *memory_module.Memory) {
+	return func(cycles *int, mem *memory_module.Memory) {
 		address := addressor(cycles, mem)
 		loader(cycles, mem, address)
 		flaghandler()
@@ -115,12 +112,12 @@ func loadFlagLoaderFactory(register *Byte, Z *bool, N *bool) func() {
 }
 
 // Execute n cycles using the memory
-func (cpu *CPU) Execute(cycles int, mem *memory.Memory) (bool, int) {
+func (cpu *CPU) Execute(cycles int, mem *memory_module.Memory) (bool, int) {
 	AFlagLoader := loadFlagLoaderFactory(&cpu.A, &cpu.Z, &cpu.N)
 	XFlagLoader := loadFlagLoaderFactory(&cpu.X, &cpu.Z, &cpu.N)
 	YFlagLoader := loadFlagLoaderFactory(&cpu.Y, &cpu.Z, &cpu.N)
 
-	instruction_map := map[Byte]func(*int, *memory.Memory){
+	instruction_map := map[Byte]func(*int, *memory_module.Memory){
 		LDA_IM: registerLoaderFactory(cpu.ImmediateAddressing, cpu.loadA, AFlagLoader),
 		LDA_ZP: registerLoaderFactory(cpu.ZeroPageAddressing, cpu.loadA, AFlagLoader),
 		LDA_ZX: registerLoaderFactory(cpu.ZeroPageXAddressing, cpu.loadA, AFlagLoader),

@@ -1,7 +1,7 @@
-package cpu
+package cpu_module
 
 import (
-	"E6502/memory"
+	"E6502/memory_module"
 	"testing"
 )
 
@@ -53,11 +53,11 @@ func ValidateLoad(success bool, register Byte, value Byte, cpu CPU, cpuCopy CPU,
 
 func Test_EXECUTION_RETURN_WITH_UNKNOWN_INSTRUCTION(t *testing.T) {
 	cpu := NewCPU()
-	memory := memory.NewMemory()
-	memory.WB(0xFFFC, 0x00)
+	mem := memory_module.NewMemory()
+	mem.WB(0xFFFC, 0x00)
 
 	cpuCopy := cpu
-	success, _ := cpu.Execute(1, &memory)
+	success, _ := cpu.Execute(1, &mem)
 
 	if success {
 		t.Error("Execution should fail with an unknown instruction!")
