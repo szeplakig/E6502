@@ -1,4 +1,8 @@
-package memory_module
+package memorymodule
+
+import (
+	. "E6502/utils"
+)
 
 type Memory struct { // The Memory structure of the 6502
 	Data []Byte

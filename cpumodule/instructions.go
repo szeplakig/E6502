@@ -1,4 +1,4 @@
-package cpu_module
+package cpumodule
 
 const (
 	NOP = 0xEA
@@ -23,4 +23,20 @@ const (
 	LDY_ZX = 0xB4
 	LDY_AB = 0xAC
 	LDY_AX = 0xBC
+
+	STA_ZP = 0x85
+	STA_ZX = 0x95
+	STA_AB = 0x8D
+	STA_AX = 0x9D
+	STA_AY = 0x99
+	STA_IX = 0x81
+	STA_IY = 0x91
+
+	STX_ZP = 0x86
+	STX_ZY = 0x96
+	STX_AB = 0x8E
+
+	STY_ZP = 0x84
+	STY_ZX = 0x94
+	STY_AB = 0x8C
 )

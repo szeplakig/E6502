@@ -1,6 +1,7 @@
-package memory_module
+package memorymodule
 
 import (
+	. "E6502/utils"
 	"testing"
 )
 
