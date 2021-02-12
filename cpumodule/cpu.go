@@ -141,7 +141,7 @@ func (cpu *CPU) Execute(cycles int, mem *memorymodule.Memory) (bool, int) {
 	XFlagLoader := loadFlagLoaderFactory(&cpu.X, &cpu.Z, &cpu.N)
 	YFlagLoader := loadFlagLoaderFactory(&cpu.Y, &cpu.Z, &cpu.N)
 
-	instruction_map := map[Byte]func(*int, *memorymodule.Memory){
+	instructionMap := map[Byte]func(*int, *memorymodule.Memory){
 		LDA_IM: registerLoaderFactory(cpu.ImmediateAddressing, &cpu.A, AFlagLoader),
 		LDA_ZP: registerLoaderFactory(cpu.ZeroPageAddressing, &cpu.A, AFlagLoader),
 		LDA_ZX: registerLoaderFactory(cpu.ZeroPageXAddressing, &cpu.A, AFlagLoader),
@@ -164,11 +164,13 @@ func (cpu *CPU) Execute(cycles int, mem *memorymodule.Memory) (bool, int) {
 		LDY_AX: registerLoaderFactory(cpu.AbsoluteXAddressing, &cpu.Y, YFlagLoader),
 
 		STA_ZP: registerStorerFactory(cpu.ZeroPageAddressing, &cpu.A),
+		STA_ZX: registerStorerFactory(cpu.ZeroPageXAddressing, &cpu.A),
+
 	}
 
 	for cycles > 0 {
-		next_ins := cpu.fetchBytePC(&cycles, mem)
-		if handler, ok := instruction_map[next_ins]; ok {
+		nextIns := cpu.fetchBytePC(&cycles, mem)
+		if handler, ok := instructionMap[nextIns]; ok {
 			handler(&cycles, mem)
 		} else {
 			return false, cycles
