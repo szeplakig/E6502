@@ -165,6 +165,7 @@ func (cpu *CPU) Execute(cycles int, mem *memorymodule.Memory) (bool, int) {
 
 		STA_ZP: registerStorerFactory(cpu.ZeroPageAddressing, &cpu.A),
 		STA_ZX: registerStorerFactory(cpu.ZeroPageXAddressing, &cpu.A),
+		STA_AB: registerStorerFactory(cpu.AbsoluteAddressing, &cpu.A),
 
 	}
 
