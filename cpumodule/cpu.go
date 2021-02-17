@@ -142,6 +142,7 @@ func (cpu *CPU) Execute(cycles int, mem *memorymodule.Memory) (bool, int) {
 	YFlagLoader := loadFlagLoaderFactory(&cpu.Y, &cpu.Z, &cpu.N)
 
 	instructionMap := map[Byte]func(*int, *memorymodule.Memory){
+		NOP:    func(cycles *int, mem *memorymodule.Memory) { *cycles-- },
 		LDA_IM: registerLoaderFactory(cpu.ImmediateAddressing, &cpu.A, AFlagLoader),
 		LDA_ZP: registerLoaderFactory(cpu.ZeroPageAddressing, &cpu.A, AFlagLoader),
 		LDA_ZX: registerLoaderFactory(cpu.ZeroPageXAddressing, &cpu.A, AFlagLoader),
@@ -166,7 +167,10 @@ func (cpu *CPU) Execute(cycles int, mem *memorymodule.Memory) (bool, int) {
 		STA_ZP: registerStorerFactory(cpu.ZeroPageAddressing, &cpu.A),
 		STA_ZX: registerStorerFactory(cpu.ZeroPageXAddressing, &cpu.A),
 		STA_AB: registerStorerFactory(cpu.AbsoluteAddressing, &cpu.A),
-
+		STA_AX: registerStorerFactory(cpu.AbsoluteXAddressingLong, &cpu.A),
+		STA_AY: registerStorerFactory(cpu.AbsoluteYAddressingLong, &cpu.A),
+		STA_IX: registerStorerFactory(cpu.IndirectXAddressing, &cpu.A),
+		STA_IY: registerStorerFactory(cpu.IndirectYAddressingLong, &cpu.A),
 	}
 
 	for cycles > 0 {

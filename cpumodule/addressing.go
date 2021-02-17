@@ -17,16 +17,16 @@ func (cpu *CPU) ZeroPageAddressing(cycles *int, mem *memorymodule.Memory) Word {
 
 func (cpu *CPU) ZeroPageXAddressing(cycles *int, mem *memorymodule.Memory) Word {
 	address := cpu.fetchBytePC(cycles, mem)
-	offset_address := Word(address) + Word(cpu.X)
+	offsetAddress := Word(address) + Word(cpu.X)
 	*cycles--
-	return offset_address
+	return offsetAddress
 }
 
 func (cpu *CPU) ZeroPageYAddressing(cycles *int, mem *memorymodule.Memory) Word {
 	address := cpu.fetchBytePC(cycles, mem)
-	offset_address := Word(address) + Word(cpu.Y)
+	offsetAddress := Word(address) + Word(cpu.Y)
 	*cycles--
-	return offset_address
+	return offsetAddress
 }
 
 func (cpu *CPU) AbsoluteAddressing(cycles *int, mem *memorymodule.Memory) Word {
@@ -40,29 +40,55 @@ func (cpu *CPU) AbsoluteXAddressing(cycles *int, mem *memorymodule.Memory) Word 
 	lower := cpu.fetchBytePC(cycles, mem)
 	upper := cpu.fetchBytePC(cycles, mem)
 	address := Word(upper)<<8 | Word(lower)
-	offset_address := add(cycles, address, Word(cpu.X))
-	return offset_address
+	offsetAddress := add(cycles, address, Word(cpu.X))
+	return offsetAddress
+}
+
+func (cpu *CPU) AbsoluteXAddressingLong(cycles *int, mem *memorymodule.Memory) Word {
+	lower := cpu.fetchBytePC(cycles, mem)
+	upper := cpu.fetchBytePC(cycles, mem)
+	address := Word(upper)<<8 | Word(lower)
+	offsetAddress := address + Word(cpu.X)
+	*cycles--
+	return offsetAddress
 }
 
 func (cpu *CPU) AbsoluteYAddressing(cycles *int, mem *memorymodule.Memory) Word {
 	lower := cpu.fetchBytePC(cycles, mem)
 	upper := cpu.fetchBytePC(cycles, mem)
 	address := Word(upper)<<8 | Word(lower)
-	offset_address := add(cycles, address, Word(cpu.Y))
-	return offset_address
+	offsetAddress := add(cycles, address, Word(cpu.Y))
+	return offsetAddress
+}
+
+func (cpu *CPU) AbsoluteYAddressingLong(cycles *int, mem *memorymodule.Memory) Word {
+	lower := cpu.fetchBytePC(cycles, mem)
+	upper := cpu.fetchBytePC(cycles, mem)
+	address := Word(upper)<<8 | Word(lower)
+	offsetAddress := address + Word(cpu.Y)
+	*cycles--
+	return offsetAddress
 }
 
 func (cpu *CPU) IndirectXAddressing(cycles *int, mem *memorymodule.Memory) Word {
 	address := cpu.fetchBytePC(cycles, mem)
-	offset_address := Word(address + cpu.X)
+	offsetAddress := Word(Byte(address + cpu.X))
 	*cycles--
-	indirect_address := fetchWord(cycles, mem, offset_address)
-	return indirect_address
+	indirectAddress := fetchWord(cycles, mem, offsetAddress)
+	return indirectAddress
 }
 
 func (cpu *CPU) IndirectYAddressing(cycles *int, mem *memorymodule.Memory) Word {
 	address := Word(cpu.fetchBytePC(cycles, mem))
-	indirect_address := fetchWord(cycles, mem, address)
-	offset_address := add(cycles, indirect_address, Word(cpu.Y))
-	return offset_address
+	indirectAddress := fetchWord(cycles, mem, address)
+	offsetAddress := add(cycles, indirectAddress, Word(cpu.Y))
+	return offsetAddress
+}
+
+func (cpu *CPU) IndirectYAddressingLong(cycles *int, mem *memorymodule.Memory) Word {
+	address := Word(cpu.fetchBytePC(cycles, mem))
+	indirectAddress := fetchWord(cycles, mem, address)
+	offsetAddress := indirectAddress + Word(cpu.Y)
+	*cycles--
+	return offsetAddress
 }
