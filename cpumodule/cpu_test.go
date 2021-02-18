@@ -3,6 +3,7 @@ package cpumodule
 import (
 	. "E6502/memorymodule"
 	. "E6502/utils"
+	"reflect"
 	"testing"
 )
 
@@ -20,6 +21,21 @@ func Test_EXECUTION_RETURN_WITH_UNKNOWN_INSTRUCTION(t *testing.T) {
 
 	if !VerifyFlagsUnchanged(cpu, cpuCopy, ALL) {
 		t.Error("No instructions executed should leave all flags unchanged!")
+	}
+}
+
+func Test_NOP_SHOULD_ONLY_CHANGE_THE_PC(t *testing.T) {
+	cpu := NewCPU()
+	mem := NewMemory()
+	mem.WB(0xFFFC, NOP)
+
+	memCopy := mem
+	cpuCopy := cpu
+	cpu.Execute(2, &mem)
+	cpu.PC--
+
+	if !reflect.DeepEqual(cpu, cpuCopy) || !reflect.DeepEqual(mem, memCopy) {
+		t.Error("NOP should change nothing!")
 	}
 }
 

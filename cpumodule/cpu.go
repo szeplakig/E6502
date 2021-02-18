@@ -171,6 +171,14 @@ func (cpu *CPU) Execute(cycles int, mem *memorymodule.Memory) (bool, int) {
 		STA_AY: registerStorerFactory(cpu.AbsoluteYAddressingLong, &cpu.A),
 		STA_IX: registerStorerFactory(cpu.IndirectXAddressing, &cpu.A),
 		STA_IY: registerStorerFactory(cpu.IndirectYAddressingLong, &cpu.A),
+
+		STX_ZP: registerStorerFactory(cpu.ZeroPageAddressing, &cpu.X),
+		STX_ZY: registerStorerFactory(cpu.ZeroPageYAddressing, &cpu.X),
+		STX_AB: registerStorerFactory(cpu.AbsoluteAddressing, &cpu.X),
+
+		STY_ZP: registerStorerFactory(cpu.ZeroPageAddressing, &cpu.Y),
+		STY_ZX: registerStorerFactory(cpu.ZeroPageXAddressing, &cpu.Y),
+		STY_AB: registerStorerFactory(cpu.AbsoluteAddressing, &cpu.Y),
 	}
 
 	for cycles > 0 {
